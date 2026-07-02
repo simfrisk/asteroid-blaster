@@ -1,0 +1,12 @@
+{
+  "name": "asteroid-blaster",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Asteroid Blaster - a space shooter built from a napkin sketch, deployed on Eyevinn Open Source Cloud.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
