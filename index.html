@@ -95,8 +95,10 @@
 
   // ---- Game state ----
   let state = 'menu'; // menu | playing | dead
-  let ship, bullets, asteroids, ufos, ufoBullets, particles, powerups;
-  let score, lives, tPrev, spawnTimer, ufoTimer, powerTimer, fireCd, elapsed;
+  // Initialized empty so the menu can render the starfield without touching undefined state.
+  let ship = null;
+  let bullets = [], asteroids = [], ufos = [], ufoBullets = [], particles = [], powerups = [];
+  let score = 0, lives = 3, tPrev = 0, spawnTimer = 0, ufoTimer = 0, powerTimer = 0, fireCd = 0, elapsed = 0;
   let powerUntil = 0; // rapid/spread active until this timestamp
 
   function reset() {
@@ -380,9 +382,10 @@
       ctx.restore();
     }
 
-    if (state === 'playing') drawShip();
+    if (state === 'playing' && ship) drawShip();
 
-    // HUD (the "stats" panel from the sketch)
+    // HUD (the "stats" panel from the sketch) — only while a round is in progress
+    if (state !== 'playing') return;
     ctx.fillStyle = 'rgba(5,6,15,0.55)';
     ctx.fillRect(10, 10, 176, 74);
     ctx.strokeStyle = 'rgba(124,243,255,0.35)'; ctx.lineWidth = 1; ctx.strokeRect(10, 10, 176, 74);
@@ -409,8 +412,12 @@
   function loop(now) {
     const dt = Math.min(0.033, (now - tPrev) / 1000 || 0);
     tPrev = now;
-    if (state === 'playing') update(dt);
-    draw();
+    try {
+      if (state === 'playing') update(dt);
+      draw();
+    } catch (err) {
+      console.error('frame error', err); // never let one frame kill the loop
+    }
     requestAnimationFrame(loop);
   }
 
