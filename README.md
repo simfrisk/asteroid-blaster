@@ -1,8 +1,8 @@
-# Asteroid Blaster
+# Captain Liivo
 
-A browser space shooter built from a hand-drawn napkin sketch and deployed on [Eyevinn Open Source Cloud](https://www.osaas.io).
+A browser space shooter built from a hand-drawn napkin sketch, built and deployed with [Liivo](https://www.liivo.ai) on [Eyevinn Open Source Cloud](https://www.osaas.io).
 
-Pilot your ship, dodge drifting asteroids, blast UFOs, and grab glowing power-ups for a rapid-fire spread.
+Suit up, Captain. Dodge drifting asteroids, blast UFOs, and grab glowing power-ups for a rapid-fire spread.
 
 ## Controls
 - Move: `W A S D` or arrow keys

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Asteroid Blaster</title>
+<title>Captain Liivo</title>
 <style>
   :root { --bg:#05060f; --hud:#7cf3ff; --accent:#ff5d8f; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,14 +27,14 @@
   <div id="wrap"><canvas id="game"></canvas></div>
 
   <div id="overlay">
-    <h1>ASTEROID <span>BLASTER</span></h1>
-    <p id="msg">Pilot your ship, dodge the drifting asteroids, and blast the UFOs before they blast you. Grab glowing power-ups for a rapid-fire spread.</p>
+    <h1>CAPTAIN <span>LIIVO</span></h1>
+    <p id="msg">Suit up, Captain. Dodge the drifting asteroids, blast the UFOs before they blast you, and grab glowing power-ups for a rapid-fire spread.</p>
     <div class="keys">
       Move: <b>W A S D</b> / <b>Arrow keys</b> &nbsp;&middot;&nbsp; Fire: <b>Space</b> / <b>hold click</b><br/>
       On mobile: <b>drag to move</b>, ship auto-fires.
     </div>
     <button id="startBtn">START</button>
-    <div class="badge">Deployed on Eyevinn Open Source Cloud</div>
+    <div class="badge">Built and deployed with Liivo &middot; liivo.ai</div>
   </div>
 
 <script>
@@ -162,7 +162,7 @@
     state = 'dead';
     const best = Math.max(score, +(localStorage.getItem('ab_best') || 0));
     localStorage.setItem('ab_best', best);
-    msg.innerHTML = `<div class="final">Score: ${score}</div>Best: ${best} &middot; Survived ${elapsed.toFixed(0)}s<br/><br/>You piloted through the belt. Ready for another run?`;
+    msg.innerHTML = `<div class="final">Score: ${score}</div>Best: ${best} &middot; Survived ${elapsed.toFixed(0)}s<br/><br/>Nice flying, Captain. Ready for another run?`;
     startBtn.textContent = 'PLAY AGAIN';
     overlay.classList.remove('hidden');
   }
