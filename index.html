@@ -1,435 +1,53 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Captain Liivo</title>
-<style>
-  :root { --bg:#05060f; --hud:#7cf3ff; --accent:#ff5d8f; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: var(--bg); overflow: hidden; font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif; color: #dfe9ff; -webkit-user-select: none; user-select: none; }
-  #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
-  canvas { background: radial-gradient(circle at 70% 40%, #0d1330 0%, #05060f 70%); display: block; touch-action: none; }
-  #overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(3,5,15,0.82); backdrop-filter: blur(3px); z-index: 10; padding: 24px; }
-  #overlay.hidden { display: none; }
-  h1 { font-size: clamp(34px, 8vw, 66px); letter-spacing: 4px; color: var(--hud); text-shadow: 0 0 18px rgba(124,243,255,0.6); }
-  h1 span { color: var(--accent); text-shadow: 0 0 18px rgba(255,93,143,0.6); }
-  p { max-width: 460px; margin: 14px 0; line-height: 1.5; color: #9fb2d8; font-size: clamp(14px,3.6vw,17px); }
-  .keys { font-size: 14px; color: #6f83ad; margin-bottom: 22px; }
-  .keys b { color: #cfe0ff; }
-  button { font: inherit; font-size: 20px; font-weight: bold; letter-spacing: 2px; color: #05060f; background: linear-gradient(180deg,#7cf3ff,#3ab7d6); border: none; padding: 15px 46px; border-radius: 40px; cursor: pointer; box-shadow: 0 8px 30px rgba(124,243,255,0.35); transition: transform .08s ease; }
-  button:active { transform: scale(0.96); }
-  .final { color: var(--accent); font-size: clamp(20px,5vw,30px); font-weight: bold; margin: 6px 0 4px; }
-  .badge { font-size: 12px; color: #5a6a90; margin-top: 30px; letter-spacing: 1px; }
-</style>
-</head>
-<body>
-  <div id="wrap"><canvas id="game"></canvas></div>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Captain Liivo</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="game-frame" aria-label="Captain Liivo game">
+        <header class="hud" aria-live="polite">
+          <div>
+            <span class="label">Score</span>
+            <strong id="score">0</strong>
+          </div>
+          <div>
+            <span class="label">Planet</span>
+            <strong id="planet">100%</strong>
+          </div>
+          <div>
+            <span class="label">Hull</span>
+            <strong id="hull">100%</strong>
+          </div>
+          <div>
+            <span class="label">State</span>
+            <strong id="state">Ready</strong>
+          </div>
+        </header>
 
-  <div id="overlay">
-    <h1>CAPTAIN <span>LIIVO</span></h1>
-    <p id="msg">Suit up, Captain. Dodge the drifting asteroids, blast the UFOs before they blast you, and grab glowing power-ups for a rapid-fire spread.</p>
-    <div class="keys">
-      Move: <b>W A S D</b> / <b>Arrow keys</b> &nbsp;&middot;&nbsp; Fire: <b>Space</b> / <b>hold click</b><br/>
-      On mobile: <b>drag to move</b>, ship auto-fires.
-    </div>
-    <button id="startBtn">START</button>
-    <div class="badge">Built and deployed with Liivo &middot; liivo.ai</div>
-  </div>
+        <canvas id="game" width="390" height="720"></canvas>
 
-<script>
-(() => {
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const overlay = document.getElementById('overlay');
-  const startBtn = document.getElementById('startBtn');
-  const msg = document.getElementById('msg');
+        <div class="overlay" id="overlay">
+          <h1>Captain Liivo</h1>
+          <p>Defend the ringed planet, outfly the UFO lasers, and punch through the asteroid field.</p>
+          <button id="startButton" class="primary" type="button">Launch</button>
+        </div>
 
-  let W = 0, H = 0, DPR = 1;
-  function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; H = window.innerHeight;
-    canvas.width = W * DPR; canvas.height = H * DPR;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  window.addEventListener('resize', resize);
-  resize();
+        <div class="touch-controls" aria-label="Touch controls">
+          <div class="pad" aria-hidden="false">
+            <button class="touch up" data-control="up" type="button" title="Up" aria-label="Up"><span></span></button>
+            <button class="touch left" data-control="left" type="button" title="Left" aria-label="Left"><span></span></button>
+            <button class="touch down" data-control="down" type="button" title="Down" aria-label="Down"><span></span></button>
+            <button class="touch right" data-control="right" type="button" title="Right" aria-label="Right"><span></span></button>
+          </div>
+          <button class="touch fire" data-control="fire" type="button" title="Fire" aria-label="Fire"><span></span></button>
+        </div>
+      </section>
+    </main>
 
-  // ---- Starfield ----
-  let stars = [];
-  function initStars() {
-    stars = [];
-    const n = Math.floor((W * H) / 6000);
-    for (let i = 0; i < n; i++) {
-      stars.push({ x: Math.random() * W, y: Math.random() * H, z: Math.random() * 0.8 + 0.2 });
-    }
-  }
-  initStars();
-  window.addEventListener('resize', initStars);
-
-  // ---- Input ----
-  const keys = {};
-  const pointer = { active: false, x: 0, y: 0, firing: false, touch: false };
-  addEventListener('keydown', e => {
-    keys[e.code] = true;
-    if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
-  });
-  addEventListener('keyup', e => keys[e.code] = false);
-
-  function ptFromEvent(e) {
-    const t = e.touches ? e.touches[0] : e;
-    return { x: t.clientX, y: t.clientY };
-  }
-  canvas.addEventListener('pointerdown', e => {
-    pointer.active = true; pointer.firing = true; pointer.touch = (e.pointerType === 'touch');
-    const p = ptFromEvent(e); pointer.x = p.x; pointer.y = p.y;
-  });
-  canvas.addEventListener('pointermove', e => {
-    if (!pointer.active) return; const p = ptFromEvent(e); pointer.x = p.x; pointer.y = p.y;
-  });
-  const endPtr = () => { pointer.active = false; pointer.firing = false; };
-  canvas.addEventListener('pointerup', endPtr);
-  canvas.addEventListener('pointercancel', endPtr);
-  canvas.addEventListener('pointerleave', () => { pointer.firing = false; });
-
-  // ---- Game state ----
-  let state = 'menu'; // menu | playing | dead
-  // Initialized empty so the menu can render the starfield without touching undefined state.
-  let ship = null;
-  let bullets = [], asteroids = [], ufos = [], ufoBullets = [], particles = [], powerups = [];
-  let score = 0, lives = 3, tPrev = 0, spawnTimer = 0, ufoTimer = 0, powerTimer = 0, fireCd = 0, elapsed = 0;
-  let powerUntil = 0; // rapid/spread active until this timestamp
-
-  function reset() {
-    ship = { x: W * 0.72, y: H / 2, r: 16, vy: 0, vx: 0, inv: 1.5 };
-    bullets = []; asteroids = []; ufos = []; ufoBullets = []; particles = []; powerups = [];
-    score = 0; lives = 3; spawnTimer = 0.6; ufoTimer = 6; powerTimer = 12; fireCd = 0; elapsed = 0;
-    powerUntil = 0;
-    for (let i = 0; i < 4; i++) spawnAsteroid();
-  }
-
-  function rand(a, b) { return a + Math.random() * (b - a); }
-
-  function spawnAsteroid() {
-    const r = rand(18, 46);
-    const y = rand(r, H - r);
-    const verts = [];
-    const n = Math.floor(rand(7, 11));
-    for (let i = 0; i < n; i++) verts.push(rand(0.72, 1.15));
-    asteroids.push({
-      x: -r - rand(0, 200), y, r,
-      vx: rand(70, 130) + score * 0.02, vy: rand(-30, 30),
-      spin: rand(-1.4, 1.4), ang: 0, verts
-    });
-  }
-
-  function spawnUfo() {
-    const y = rand(60, H - 60);
-    ufos.push({ x: -40, y, r: 20, vx: rand(80, 120), vy: 0, baseY: y, phase: rand(0, 6), fire: rand(0.8, 1.6) });
-  }
-
-  function spawnPower() {
-    powerups.push({ x: -20, y: rand(40, H - 40), r: 13, vx: 90, ang: 0, pulse: 0 });
-  }
-
-  function boom(x, y, color, count, spd) {
-    for (let i = 0; i < count; i++) {
-      const a = Math.random() * Math.PI * 2, s = rand(spd * 0.3, spd);
-      particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rand(0.4, 0.9), max: 0.9, color });
-    }
-  }
-
-  function fire() {
-    const powered = performance.now() < powerUntil;
-    const speed = 620;
-    if (powered) {
-      for (const dy of [-0.22, 0, 0.22]) bullets.push({ x: ship.x - ship.r, y: ship.y, vx: -speed, vy: dy * speed, r: 6 });
-    } else {
-      bullets.push({ x: ship.x - ship.r, y: ship.y, vx: -speed, vy: 0, r: 6 });
-    }
-  }
-
-  function hurtShip() {
-    if (ship.inv > 0) return;
-    lives--;
-    boom(ship.x, ship.y, '#ff5d8f', 40, 320);
-    ship.inv = 2.2; ship.x = W * 0.72; ship.y = H / 2; ship.vx = ship.vy = 0;
-    if (lives <= 0) gameOver();
-  }
-
-  function gameOver() {
-    state = 'dead';
-    const best = Math.max(score, +(localStorage.getItem('ab_best') || 0));
-    localStorage.setItem('ab_best', best);
-    msg.innerHTML = `<div class="final">Score: ${score}</div>Best: ${best} &middot; Survived ${elapsed.toFixed(0)}s<br/><br/>Nice flying, Captain. Ready for another run?`;
-    startBtn.textContent = 'PLAY AGAIN';
-    overlay.classList.remove('hidden');
-  }
-
-  function circHit(a, b, pad = 0) {
-    const dx = a.x - b.x, dy = a.y - b.y, rr = a.r + b.r + pad;
-    return dx * dx + dy * dy < rr * rr;
-  }
-
-  function update(dt) {
-    elapsed += dt;
-    // ship control
-    const accel = 900, maxv = 420, fr = 0.86;
-    let ax = 0, ay = 0;
-    if (keys['KeyW'] || keys['ArrowUp']) ay -= 1;
-    if (keys['KeyS'] || keys['ArrowDown']) ay += 1;
-    if (keys['KeyA'] || keys['ArrowLeft']) ax -= 1;
-    if (keys['KeyD'] || keys['ArrowRight']) ax += 1;
-    if (pointer.active && pointer.touch) {
-      // drag-follow on touch
-      const tx = pointer.x, ty = pointer.y;
-      ship.vx = (tx - ship.x) * 8; ship.vy = (ty - ship.y) * 8;
-    } else {
-      ship.vx = (ship.vx + ax * accel * dt) * fr;
-      ship.vy = (ship.vy + ay * accel * dt) * fr;
-    }
-    ship.vx = Math.max(-maxv, Math.min(maxv, ship.vx));
-    ship.vy = Math.max(-maxv, Math.min(maxv, ship.vy));
-    ship.x += ship.vx * dt; ship.y += ship.vy * dt;
-    ship.x = Math.max(ship.r, Math.min(W - ship.r, ship.x));
-    ship.y = Math.max(ship.r, Math.min(H - ship.r, ship.y));
-    if (ship.inv > 0) ship.inv -= dt;
-
-    // firing
-    fireCd -= dt;
-    const wantFire = keys['Space'] || pointer.firing || (pointer.touch && pointer.active);
-    const powered = performance.now() < powerUntil;
-    const rate = powered ? 0.09 : 0.18;
-    if (wantFire && fireCd <= 0) { fire(); fireCd = rate; }
-
-    // bullets
-    for (const b of bullets) { b.x += b.vx * dt; b.y += b.vy * dt; }
-    bullets = bullets.filter(b => b.x > -20 && b.y > -20 && b.y < H + 20);
-
-    // spawns scale with time
-    spawnTimer -= dt;
-    const spawnEvery = Math.max(0.42, 1.1 - elapsed * 0.006);
-    if (spawnTimer <= 0) { spawnAsteroid(); spawnTimer = spawnEvery; }
-    ufoTimer -= dt;
-    if (ufoTimer <= 0) { spawnUfo(); ufoTimer = rand(6, 11); }
-    powerTimer -= dt;
-    if (powerTimer <= 0) { spawnPower(); powerTimer = rand(14, 22); }
-
-    // asteroids
-    for (const a of asteroids) {
-      a.x += a.vx * dt; a.y += a.vy * dt; a.ang += a.spin * dt;
-      if (a.y < a.r || a.y > H - a.r) a.vy *= -1;
-    }
-
-    // ufos
-    for (const u of ufos) {
-      u.phase += dt; u.x += u.vx * dt; u.y = u.baseY + Math.sin(u.phase * 1.8) * 60;
-      u.fire -= dt;
-      if (u.fire <= 0 && u.x < W && u.x > 0) {
-        u.fire = rand(1.1, 2.0);
-        const dx = ship.x - u.x, dy = ship.y - u.y, d = Math.hypot(dx, dy) || 1;
-        ufoBullets.push({ x: u.x, y: u.y, vx: dx / d * 260, vy: dy / d * 260, r: 5 });
-      }
-    }
-    for (const b of ufoBullets) { b.x += b.vx * dt; b.y += b.vy * dt; }
-    ufoBullets = ufoBullets.filter(b => b.x > -20 && b.x < W + 20 && b.y > -20 && b.y < H + 20);
-
-    // powerups
-    for (const p of powerups) { p.x += p.vx * dt; p.ang += dt * 2; p.pulse += dt * 5; }
-
-    // particles
-    for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.96; p.vy *= 0.96; p.life -= dt; }
-    particles = particles.filter(p => p.life > 0);
-
-    // collisions: bullets vs asteroids
-    for (const b of bullets) {
-      for (const a of asteroids) {
-        if (circHit(b, a, -4)) {
-          b.dead = true; a.hp = (a.hp || 0) + 1;
-          boom(b.x, b.y, '#7cf3ff', 6, 140);
-          if (a.r > 26) {
-            // split
-            a.r *= 0.6;
-            asteroids.push({ x: a.x, y: a.y, r: a.r, vx: a.vx + rand(20, 60), vy: rand(-90, 90), spin: rand(-1.6, 1.6), ang: 0, verts: a.verts });
-            score += 15;
-          } else { a.dead = true; boom(a.x, a.y, '#b9c6ff', 18, 200); score += 25; }
-          break;
-        }
-      }
-    }
-    // bullets vs ufos
-    for (const b of bullets) {
-      if (b.dead) continue;
-      for (const u of ufos) {
-        if (circHit(b, u, -2)) { b.dead = true; u.dead = true; boom(u.x, u.y, '#ffd166', 30, 260); score += 75; break; }
-      }
-    }
-    bullets = bullets.filter(b => !b.dead);
-    asteroids = asteroids.filter(a => !a.dead && a.x < W + a.r + 60);
-    ufos = ufos.filter(u => !u.dead && u.x < W + 60);
-
-    // ship vs hazards
-    for (const a of asteroids) if (circHit(ship, a, -4)) { a.dead = true; boom(a.x, a.y, '#b9c6ff', 16, 200); hurtShip(); break; }
-    for (const u of ufos) if (circHit(ship, u)) { u.dead = true; boom(u.x, u.y, '#ffd166', 24, 240); hurtShip(); break; }
-    for (const b of ufoBullets) if (circHit(ship, b)) { b.dead = true; hurtShip(); break; }
-    ufoBullets = ufoBullets.filter(b => !b.dead);
-    asteroids = asteroids.filter(a => !a.dead);
-    ufos = ufos.filter(u => !u.dead);
-
-    // powerup pickup
-    for (const p of powerups) {
-      if (circHit(ship, p, 6)) { p.dead = true; powerUntil = performance.now() + 7000; boom(p.x, p.y, '#8affc1', 22, 220); score += 10; }
-    }
-    powerups = powerups.filter(p => !p.dead && p.x < W + 40);
-  }
-
-  // ---- Draw ----
-  function drawShip() {
-    const powered = performance.now() < powerUntil;
-    ctx.save();
-    ctx.translate(ship.x, ship.y);
-    if (ship.inv > 0 && Math.floor(ship.inv * 12) % 2 === 0) ctx.globalAlpha = 0.35;
-    // thruster
-    const flick = 0.6 + Math.random() * 0.5;
-    const g = ctx.createLinearGradient(ship.r, 0, ship.r + 26 * flick, 0);
-    g.addColorStop(0, 'rgba(255,190,80,0.9)'); g.addColorStop(1, 'rgba(255,80,80,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.moveTo(ship.r - 2, -7); ctx.lineTo(ship.r + 26 * flick, 0); ctx.lineTo(ship.r - 2, 7); ctx.closePath(); ctx.fill();
-    // body (points left, matching sketch)
-    ctx.fillStyle = powered ? '#8affc1' : '#dfe9ff';
-    ctx.strokeStyle = powered ? '#3affa0' : '#7cf3ff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-ship.r - 4, 0);
-    ctx.lineTo(ship.r, -12);
-    ctx.lineTo(ship.r - 4, 0);
-    ctx.lineTo(ship.r, 12);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    // cockpit windows (the "0000" from the sketch)
-    ctx.fillStyle = '#05233a';
-    for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(-2 + i * 6, 0, 2.4, 0, 7); ctx.fill(); }
-    ctx.restore();
-  }
-
-  function drawAsteroid(a) {
-    ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(a.ang);
-    ctx.beginPath();
-    const n = a.verts.length;
-    for (let i = 0; i < n; i++) {
-      const ang = (i / n) * Math.PI * 2, rr = a.r * a.verts[i];
-      const x = Math.cos(ang) * rr, y = Math.sin(ang) * rr;
-      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-    }
-    ctx.closePath();
-    ctx.fillStyle = '#2b3560'; ctx.fill();
-    ctx.lineWidth = 2; ctx.strokeStyle = '#8f9fd6'; ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawUfo(u) {
-    ctx.save(); ctx.translate(u.x, u.y);
-    ctx.fillStyle = '#ffd166';
-    ctx.beginPath(); ctx.ellipse(0, 4, u.r, u.r * 0.5, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = '#9fe1ff';
-    ctx.beginPath(); ctx.ellipse(0, -3, u.r * 0.55, u.r * 0.5, 0, Math.PI, 0); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,209,102,0.5)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.ellipse(0, 4, u.r + 3, u.r * 0.5 + 2, 0, 0, 7); ctx.stroke();
-    ctx.restore();
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    // stars
-    for (const s of stars) {
-      s.x -= (18 + s.z * 40) * (1 / 60);
-      if (s.x < 0) { s.x = W; s.y = Math.random() * H; }
-      ctx.globalAlpha = s.z;
-      ctx.fillStyle = '#cfe0ff';
-      ctx.fillRect(s.x, s.y, s.z * 2, s.z * 2);
-    }
-    ctx.globalAlpha = 1;
-
-    for (const p of particles) {
-      ctx.globalAlpha = Math.max(0, p.life / p.max);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
-    }
-    ctx.globalAlpha = 1;
-
-    for (const a of asteroids) drawAsteroid(a);
-    for (const u of ufos) drawUfo(u);
-
-    // bullets
-    ctx.fillStyle = '#7cf3ff'; ctx.shadowColor = '#7cf3ff'; ctx.shadowBlur = 8;
-    for (const b of bullets) { ctx.fillRect(b.x - 8, b.y - 1.5, 12, 3); }
-    ctx.shadowBlur = 0;
-    // ufo bullets
-    ctx.fillStyle = '#ff5d8f';
-    for (const b of ufoBullets) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill(); }
-
-    // powerups
-    for (const p of powerups) {
-      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.ang);
-      const s = 1 + Math.sin(p.pulse) * 0.12;
-      ctx.scale(s, s);
-      ctx.fillStyle = '#8affc1'; ctx.shadowColor = '#8affc1'; ctx.shadowBlur = 14;
-      ctx.beginPath();
-      ctx.moveTo(0, -p.r); ctx.lineTo(p.r, 0); ctx.lineTo(0, p.r); ctx.lineTo(-p.r, 0); ctx.closePath();
-      ctx.fill(); ctx.shadowBlur = 0;
-      ctx.fillStyle = '#05060f'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('+', 0, 1);
-      ctx.restore();
-    }
-
-    if (state === 'playing' && ship) drawShip();
-
-    // HUD (the "stats" panel from the sketch) — only while a round is in progress
-    if (state !== 'playing') return;
-    ctx.fillStyle = 'rgba(5,6,15,0.55)';
-    ctx.fillRect(10, 10, 176, 74);
-    ctx.strokeStyle = 'rgba(124,243,255,0.35)'; ctx.lineWidth = 1; ctx.strokeRect(10, 10, 176, 74);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#7cf3ff'; ctx.font = 'bold 13px "Trebuchet MS", sans-serif';
-    ctx.fillText('STATS', 22, 30);
-    ctx.fillStyle = '#dfe9ff'; ctx.font = 'bold 20px "Trebuchet MS", sans-serif';
-    ctx.fillText('Score  ' + score, 22, 54);
-    ctx.font = '13px "Trebuchet MS", sans-serif'; ctx.fillStyle = '#9fb2d8';
-    ctx.fillText('Time  ' + elapsed.toFixed(0) + 's', 22, 74);
-    // lives
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#ff5d8f'; ctx.font = '18px sans-serif';
-    ctx.fillText('❤'.repeat(Math.max(0, lives)), 176, 74);
-
-    const powered = performance.now() < powerUntil;
-    if (powered && state === 'playing') {
-      const left = (powerUntil - performance.now()) / 1000;
-      ctx.textAlign = 'center'; ctx.fillStyle = '#8affc1'; ctx.font = 'bold 13px "Trebuchet MS", sans-serif';
-      ctx.fillText('RAPID SPREAD ' + left.toFixed(1) + 's', W / 2, 26);
-    }
-  }
-
-  function loop(now) {
-    const dt = Math.min(0.033, (now - tPrev) / 1000 || 0);
-    tPrev = now;
-    try {
-      if (state === 'playing') update(dt);
-      draw();
-    } catch (err) {
-      console.error('frame error', err); // never let one frame kill the loop
-    }
-    requestAnimationFrame(loop);
-  }
-
-  function start() {
-    reset(); state = 'playing'; overlay.classList.add('hidden'); tPrev = performance.now();
-  }
-  startBtn.addEventListener('click', start);
-  addEventListener('keydown', e => { if ((state === 'menu' || state === 'dead') && (e.code === 'Enter' || e.code === 'Space')) start(); });
-
-  tPrev = performance.now();
-  requestAnimationFrame(loop);
-})();
-</script>
-</body>
+    <script type="module" src="./src/game.js"></script>
+  </body>
 </html>

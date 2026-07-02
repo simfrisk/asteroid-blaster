@@ -1,18 +1,36 @@
 # Captain Liivo
 
-A browser space shooter built from a hand-drawn napkin sketch, built and deployed with [Liivo](https://www.liivo.ai) on [Eyevinn Open Source Cloud](https://www.osaas.io).
+A small browser arcade game built from the paper sketch in `IMG_2465.jpeg`.
 
-Suit up, Captain. Dodge drifting asteroids, blast UFOs, and grab glowing power-ups for a rapid-fire spread.
+## Play
 
-## Controls
-- Move: `W A S D` or arrow keys
-- Fire: `Space` or hold click
-- Mobile: drag to move, ship auto-fires
-
-## Run locally
-```
+```bash
 npm start
 ```
-Then open http://localhost:8080
 
-The whole game is a single self-contained `index.html` (HTML5 canvas, no dependencies). `server.js` just serves it on `process.env.PORT`.
+Open `http://127.0.0.1:4173`.
+
+## Verify
+
+```bash
+npm run build
+```
+
+The build script syntax-checks the server and game code, then runs the Node test suite.
+
+## Game Shape
+
+- Rocket shuttle moves vertically and horizontally.
+- UFO fires lasers from the upper-left flight path.
+- Captain Liivo asteroids drift toward the ringed planet.
+- The rocket fires lasers, collects speed powerups, and survives shifting terrain bands.
+- The HUD tracks score, planet integrity, hull, and terrain state.
+
+## Liivo Notes
+
+This repo is a single deployable app with root scripts:
+
+- `npm run build`
+- `npm start`
+
+No environment variables or external services are required.

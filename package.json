@@ -1,12 +1,11 @@
 {
-  "name": "asteroid-blaster",
+  "name": "captain-liivo",
   "version": "1.0.0",
   "private": true,
-  "description": "Captain Liivo - a space shooter built from a napkin sketch, built and deployed with Liivo on Eyevinn Open Source Cloud.",
+  "type": "module",
   "scripts": {
-    "start": "node server.js"
-  },
-  "engines": {
-    "node": ">=18"
+    "build": "node --check server.mjs && node --check src/game.js && node --test",
+    "start": "node server.mjs",
+    "test": "node --test"
   }
 }
